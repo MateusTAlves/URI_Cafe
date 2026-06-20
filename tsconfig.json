@@ -10,7 +10,10 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
-  }
+  },
+  "extends": "expo/tsconfig.base"
 }
