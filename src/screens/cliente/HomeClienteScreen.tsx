@@ -21,7 +21,6 @@ export function HomeClienteScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Logo */}
         <View style={styles.logoArea}>
           <View style={styles.logoBox}>
             <Image
@@ -33,7 +32,6 @@ export function HomeClienteScreen() {
           <Text style={styles.tagline}>Peça agora, retire na lancheria</Text>
         </View>
 
-        {/* Botão Ver Cardápio */}
         <TouchableOpacity
           style={styles.btnCardapio}
           onPress={() => navigation.navigate('Cardapio')}
@@ -43,7 +41,6 @@ export function HomeClienteScreen() {
           <Text style={styles.btnCardapioText}>Ver Cardápio</Text>
         </TouchableOpacity>
 
-        {/* Destaques do dia */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Destaques do dia</Text>
@@ -59,7 +56,7 @@ export function HomeClienteScreen() {
               {destaques.map((item) => (
                 <View key={item.id} style={styles.destaqueCard}>
                   <View style={[styles.destaqueImg, { backgroundColor: item.categoria_cor ?? Colors.primary }]}>
-                    <Ionicons name="fast-food" size={32} color="#fff" />
+                    <Ionicons name={(item.categoria_icone as any) ?? 'restaurant'} size={32} color="#fff" />
                   </View>
                   <Text style={styles.destaqueNome}>{item.nome}</Text>
                   <View style={styles.destaqueFooter}>
@@ -79,7 +76,6 @@ export function HomeClienteScreen() {
 
         <View style={styles.spacer} />
 
-        {/* Link Área do Funcionário */}
         <TouchableOpacity
           style={styles.funcLink}
           onPress={() => navigation.navigate('LoginFuncionario')}

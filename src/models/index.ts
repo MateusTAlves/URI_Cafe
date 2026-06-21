@@ -13,6 +13,7 @@ export interface Produto {
   categoria_id: number;
   categoria_nome?: string;
   categoria_cor?: string;
+  categoria_icone?: string;
   disponivel: boolean;
   destaque: boolean;
 }

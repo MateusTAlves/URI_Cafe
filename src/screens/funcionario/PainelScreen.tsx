@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
@@ -41,6 +41,20 @@ export function PainelScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={22} color={Colors.primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.profileBtn} activeOpacity={0.8}>
+          <Image
+            source={require('../../../assets/images/logo_cafe.png')}
+            style={styles.profileImg}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.header}>
         <Text style={styles.data}>{hoje.charAt(0).toUpperCase() + hoje.slice(1)}</Text>
@@ -133,7 +147,26 @@ export function PainelScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: 40 },
-  header: { paddingTop: Spacing.md, gap: 4 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.md,
+  },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', ...Shadow.card,
+  },
+  profileBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.border, ...Shadow.card,
+  },
+  profileImg: {
+    width: '100%',
+    height: '100%',
+  },
+  header: { gap: 4 },
   data: { fontSize: Fonts.sizes.sm, color: Colors.muted },
   greeting: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   metricsRow: { flexDirection: 'row', gap: Spacing.sm },

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
 import { useProdutos } from '../../viewmodels/useProdutos';
 import { useCategorias } from '../../viewmodels/useCategorias';
 import { Produto } from '../../models';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export function CardapioGestaoScreen() {
   const navigation = useNavigation<any>();
   const [catSelecionada, setCatSelecionada] = useState<number | undefined>(undefined);
-  const { produtos, loading, carregar, toggleDisponivel, excluir } = useProdutos();
+  const [modalExcluir, setModalExcluir] = useState<number | null>(null);
+  const { produtos, loading, carregar, toggleDisponivel, toggleDestaque, excluir } = useProdutos();
   const { categorias, carregar: carregarCats } = useCategorias();
 
   useFocusEffect(
@@ -20,22 +22,15 @@ export function CardapioGestaoScreen() {
     }, [catSelecionada])
   );
 
-  const handleExcluir = (id: number) => {
-    Alert.alert('Excluir produto', 'Deseja remover este produto?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => excluir(id) },
-    ]);
-  };
-
   const renderProduto = ({ item }: { item: Produto }) => (
     <View style={styles.card}>
       <View style={[styles.cardImg, { backgroundColor: item.categoria_cor ?? Colors.accent }]}>
-        <Ionicons name="fast-food" size={36} color="#fff" />
+        <Ionicons name={(item.categoria_icone as any) ?? 'fast-food'} size={36} color="#fff" />
         <View style={styles.cardActions}>
           <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ProdutoForm', { produto: item })}>
             <Ionicons name="pencil" size={14} color={Colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => handleExcluir(item.id!)}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setModalExcluir(item.id!)}>
             <Ionicons name="trash" size={14} color={Colors.delete} />
           </TouchableOpacity>
         </View>
@@ -50,6 +45,17 @@ export function CardapioGestaoScreen() {
           onValueChange={() => toggleDisponivel(item.id!)}
           trackColor={{ false: Colors.border, true: Colors.ready }}
           thumbColor={Colors.white}
+          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+        />
+      </View>
+      <View style={[styles.switchRow, { paddingBottom: Spacing.sm }]}>
+        <Text style={styles.switchLabel}>Destaque</Text>
+        <Switch
+          value={item.destaque}
+          onValueChange={() => toggleDestaque(item.id!)}
+          trackColor={{ false: Colors.border, true: Colors.accent }}
+          thumbColor={Colors.white}
+          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
         />
       </View>
     </View>
@@ -66,17 +72,23 @@ export function CardapioGestaoScreen() {
           style={[styles.catChip, catSelecionada === undefined && styles.catChipActive]}
           onPress={() => setCatSelecionada(undefined)}
         >
+          <Ionicons name="grid" size={14} color={catSelecionada === undefined ? Colors.background : Colors.muted} />
           <Text style={[styles.catText, catSelecionada === undefined && styles.catTextActive]}>Todos</Text>
         </TouchableOpacity>
-        {categorias.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[styles.catChip, catSelecionada === cat.id && styles.catChipActive]}
-            onPress={() => setCatSelecionada(cat.id)}
-          >
-            <Text style={[styles.catText, catSelecionada === cat.id && styles.catTextActive]}>{cat.nome}</Text>
-          </TouchableOpacity>
-        ))}
+
+        {categorias.map((cat) => {
+          const ativo = catSelecionada === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[styles.catChip, ativo && { backgroundColor: cat.cor, borderColor: cat.cor }]}
+              onPress={() => setCatSelecionada(cat.id)}
+            >
+              <Ionicons name={cat.icone as any} size={14} color={ativo ? Colors.white : Colors.muted} />
+              <Text style={[styles.catText, ativo && { color: Colors.white }]}>{cat.nome}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {loading ? (
@@ -97,6 +109,20 @@ export function CardapioGestaoScreen() {
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('ProdutoForm', {})}>
         <Ionicons name="add" size={28} color={Colors.background} />
       </TouchableOpacity>
+
+      <ConfirmModal
+        visible={modalExcluir !== null}
+        titulo="Excluir produto"
+        mensagem="Deseja remover este produto permanentemente?"
+        textoConfirmar="Excluir"
+        icone="trash-outline"
+        destrutivo
+        onCancelar={() => setModalExcluir(null)}
+        onConfirmar={() => {
+          if (modalExcluir !== null) excluir(modalExcluir);
+          setModalExcluir(null);
+        }}
+      />
     </View>
   );
 }
@@ -107,7 +133,7 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   catScroll: { flexGrow: 0, flexShrink: 0 },
   catContent: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, gap: Spacing.sm, flexDirection: 'row' },
-  catChip: { paddingHorizontal: Spacing.lg, paddingVertical: 10, borderRadius: Radius.full, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border },
+  catChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: Spacing.md, paddingVertical: 10, borderRadius: Radius.full, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border },
   catChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   catText: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.muted },
   catTextActive: { color: Colors.background },
@@ -121,7 +147,7 @@ const styles = StyleSheet.create({
   cardNome: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.primary, padding: Spacing.sm, paddingBottom: 0 },
   cardDesc: { fontSize: Fonts.sizes.xs, color: Colors.muted, paddingHorizontal: Spacing.sm },
   cardPreco: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.accent, paddingHorizontal: Spacing.sm },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingBottom: Spacing.sm },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.sm, marginVertical: -4 },
   switchLabel: { fontSize: Fonts.sizes.xs, color: Colors.muted },
   fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
 });

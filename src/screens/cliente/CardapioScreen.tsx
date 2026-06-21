@@ -1,39 +1,33 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, FlatList, ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
 import { useProdutos } from '../../viewmodels/useProdutos';
 import { useCategorias } from '../../viewmodels/useCategorias';
 import { Produto } from '../../models';
 
-// Ícone por categoria
-const iconeCategoria: Record<string, string> = {
-  lanches: 'fast-food',
-  bebidas: 'cafe',
-  doces: 'ice-cream',
-  salgados: 'pizza',
-};
-
-function getIconeCategoria(nomeCategoria?: string): string {
-  if (!nomeCategoria) return 'restaurant';
-  const key = nomeCategoria.toLowerCase();
-  return iconeCategoria[key] ?? 'restaurant';
-}
-
 export function CardapioScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { produtos, loading, buscar, filtrarCategoria, categoriaFiltro } = useProdutos(true);
   const { categorias, carregar: carregarCategorias } = useCategorias();
   const [carrinho, setCarrinho] = useState<{ id: number; quantidade: number; produto: Produto }[]>([]);
 
-  useFocusEffect(useCallback(() => {
+  useEffect(() => {
     buscar('');
     carregarCategorias();
-  }, []));
+  }, []);
+
+  // Recebe o carrinho atualizado vindo do CarrinhoScreen
+  useEffect(() => {
+    if (route.params?.carrinhoAtualizado) {
+      setCarrinho(route.params.carrinhoAtualizado);
+    }
+  }, [route.params?.carrinhoAtualizado]);
 
   const totalItens = carrinho.reduce((s, i) => s + i.quantidade, 0);
 
@@ -50,19 +44,19 @@ export function CardapioScreen() {
   };
 
   const renderProduto = ({ item }: { item: Produto }) => {
-    const corFundo = item.categoria_cor ?? Colors.primary;
-    const icone = getIconeCategoria(item.categoria_nome);
-
+    const qtdNoCarrinho = carrinho.find((i) => i.id === item.id)?.quantidade ?? 0;
     return (
       <View style={styles.produtoCard}>
-        <View style={[styles.produtoImg, { backgroundColor: corFundo }]}>
-          <Ionicons name={icone as any} size={36} color="#fff" />
+        <View style={[styles.produtoImg, { backgroundColor: item.categoria_cor ?? Colors.primary }]}>
+          <Ionicons name={(item.categoria_icone as any) ?? 'restaurant'} size={36} color="#fff" />
         </View>
         <Text style={styles.produtoNome}>{item.nome}</Text>
         <Text style={styles.produtoDesc} numberOfLines={1}>{item.descricao}</Text>
         <Text style={styles.produtoPreco}>{formatCurrency(item.preco)}</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => adicionarAoCarrinho(item)}>
-          <Text style={styles.addBtnText}>+ Adicionar</Text>
+          <Text style={styles.addBtnText}>
+            {qtdNoCarrinho > 0 ? `+ Adicionar (${qtdNoCarrinho})` : '+ Adicionar'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -70,7 +64,6 @@ export function CardapioScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.primary} />
@@ -78,7 +71,6 @@ export function CardapioScreen() {
         <Text style={styles.headerTitle}>Cardápio</Text>
       </View>
 
-      {/* Busca */}
       <View style={styles.searchBox}>
         <Ionicons name="search" size={18} color={Colors.muted} />
         <TextInput
@@ -89,14 +81,12 @@ export function CardapioScreen() {
         />
       </View>
 
-      {/* Categorias */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoriasContent}
         style={styles.categoriasScroll}
       >
-        {/* Chip Todos */}
         <TouchableOpacity
           style={[
             styles.categoriaChip,
@@ -104,17 +94,12 @@ export function CardapioScreen() {
           ]}
           onPress={() => filtrarCategoria(undefined)}
         >
-          <Ionicons
-            name="grid"
-            size={14}
-            color={!categoriaFiltro ? Colors.background : Colors.muted}
-          />
+          <Ionicons name="grid" size={14} color={!categoriaFiltro ? Colors.background : Colors.muted} />
           <Text style={[styles.categoriaText, !categoriaFiltro && styles.categoriaTextActive]}>
             Todos
           </Text>
         </TouchableOpacity>
 
-        {/* Chips de cada categoria com sua cor */}
         {categorias.map((cat) => {
           const ativo = categoriaFiltro === cat.id;
           return (
@@ -126,11 +111,7 @@ export function CardapioScreen() {
               ]}
               onPress={() => filtrarCategoria(cat.id)}
             >
-              <Ionicons
-                name={cat.icone as any}
-                size={14}
-                color={ativo ? Colors.background : Colors.muted}
-              />
+              <Ionicons name={cat.icone as any} size={14} color={ativo ? Colors.background : Colors.muted} />
               <Text style={[styles.categoriaText, ativo && styles.categoriaTextActive]}>
                 {cat.nome}
               </Text>
@@ -139,7 +120,6 @@ export function CardapioScreen() {
         })}
       </ScrollView>
 
-      {/* Grid de produtos */}
       {loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -156,7 +136,6 @@ export function CardapioScreen() {
         />
       )}
 
-      {/* Badge do carrinho */}
       {totalItens > 0 && (
         <TouchableOpacity
           style={styles.carrinhoBadge}

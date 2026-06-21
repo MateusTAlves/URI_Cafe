@@ -1,20 +1,153 @@
+// src/components/ConfirmModal.tsx
 import React from 'react';
-import { Modal, View, Text, Button } from 'react-native';
+import {
+  View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '../utils/theme';
 
-export default function ConfirmModal({ visible, title, message, onConfirm, onCancel }:{ visible: boolean; title?: string; message?: string; onConfirm: () => void; onCancel: () => void }){
+interface Props {
+  visible: boolean;
+  titulo: string;
+  mensagem: string;
+  textoCancelar?: string;
+  textoConfirmar?: string;
+  icone?: string;
+  destrutivo?: boolean;
+  onCancelar: () => void;
+  onConfirmar: () => void;
+}
+
+export function ConfirmModal({
+  visible,
+  titulo,
+  mensagem,
+  textoCancelar = 'Cancelar',
+  textoConfirmar = 'Confirmar',
+  icone = 'alert-circle-outline',
+  destrutivo = false,
+  onCancelar,
+  onConfirmar,
+}: Props) {
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.5)' }}>
-        <View style={{ width:300, padding:20, backgroundColor:'#fff', borderRadius:8 }}>
-          <Text style={{ fontWeight:'bold', marginBottom:8 }}>{title || 'Confirmar'}</Text>
-          <Text style={{ marginBottom:16 }}>{message || 'Tem certeza?'}</Text>
-          <View style={{ flexDirection:'row', justifyContent:'flex-end' }}>
-            <Button title="Cancelar" onPress={onCancel} />
-            <View style={{ width:8 }} />
-            <Button title="Confirmar" onPress={onConfirm} />
-          </View>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancelar}
+    >
+      <TouchableWithoutFeedback onPress={onCancelar}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={styles.card}>
+
+              {/* Ícone */}
+              <View style={[
+                styles.iconBox,
+                { backgroundColor: destrutivo ? Colors.delete + '18' : Colors.accent + '18' },
+              ]}>
+                <Ionicons
+                  name={icone as any}
+                  size={32}
+                  color={destrutivo ? Colors.delete : Colors.accent}
+                />
+              </View>
+
+              {/* Texto */}
+              <Text style={styles.titulo}>{titulo}</Text>
+              <Text style={styles.mensagem}>{mensagem}</Text>
+
+              {/* Botões */}
+              <View style={styles.botoesRow}>
+                <TouchableOpacity style={styles.btnCancelar} onPress={onCancelar} activeOpacity={0.8}>
+                  <Text style={styles.btnCancelarText}>{textoCancelar}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.btnConfirmar, destrutivo && { backgroundColor: Colors.delete }]}
+                  onPress={onConfirmar}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.btnConfirmarText}>{textoConfirmar}</Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(61, 28, 2, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xl,
+  },
+  card: {
+    width: '100%',
+    backgroundColor: Colors.background,
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    gap: Spacing.md,
+    ...Shadow.card,
+    shadowOpacity: 0.2,
+    elevation: 8,
+  },
+  iconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xs,
+  },
+  titulo: {
+    fontSize: Fonts.sizes.lg,
+    fontWeight: '800',
+    color: Colors.primary,
+    textAlign: 'center',
+  },
+  mensagem: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.muted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  botoesRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    width: '100%',
+    marginTop: Spacing.sm,
+  },
+  btnCancelar: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingVertical: 13,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+  },
+  btnCancelarText: {
+    fontSize: Fonts.sizes.md,
+    fontWeight: '700',
+    color: Colors.muted,
+  },
+  btnConfirmar: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  btnConfirmarText: {
+    fontSize: Fonts.sizes.md,
+    fontWeight: '700',
+    color: Colors.background,
+  },
+});

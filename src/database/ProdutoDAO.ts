@@ -5,7 +5,7 @@ export const ProdutoDAO = {
   async listar(filtro?: string, categoriaId?: number, apenasDisponiveis = false): Promise<Produto[]> {
     const db = getDatabase();
     let query = `
-      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor
+      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor, c.icone as categoria_icone
       FROM produtos p
       LEFT JOIN categorias c ON p.categoria_id = c.id
       WHERE 1=1
@@ -34,7 +34,7 @@ export const ProdutoDAO = {
   async listarDestaques(): Promise<Produto[]> {
     const db = getDatabase();
     const rows = await db.getAllAsync<any>(`
-      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor
+      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor, c.icone as categoria_icone
       FROM produtos p
       LEFT JOIN categorias c ON p.categoria_id = c.id
       WHERE p.destaque = 1 AND p.disponivel = 1
@@ -50,7 +50,7 @@ export const ProdutoDAO = {
   async buscarPorId(id: number): Promise<Produto | null> {
     const db = getDatabase();
     const row = await db.getFirstAsync<any>(`
-      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor
+      SELECT p.*, c.nome as categoria_nome, c.cor as categoria_cor, c.icone as categoria_icone
       FROM produtos p
       LEFT JOIN categorias c ON p.categoria_id = c.id
       WHERE p.id = ?`, [id]
@@ -65,7 +65,7 @@ export const ProdutoDAO = {
       `INSERT INTO produtos (nome, descricao, preco, categoria_id, disponivel, destaque)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [produto.nome, produto.descricao, produto.preco, produto.categoria_id,
-       produto.disponivel ? 1 : 0, produto.destaque ? 1 : 0]
+      produto.disponivel ? 1 : 0, produto.destaque ? 1 : 0]
     );
     return result.lastInsertRowId;
   },
@@ -76,7 +76,7 @@ export const ProdutoDAO = {
       `UPDATE produtos SET nome = ?, descricao = ?, preco = ?,
        categoria_id = ?, disponivel = ?, destaque = ? WHERE id = ?`,
       [produto.nome, produto.descricao, produto.preco, produto.categoria_id,
-       produto.disponivel ? 1 : 0, produto.destaque ? 1 : 0, produto.id!]
+      produto.disponivel ? 1 : 0, produto.destaque ? 1 : 0, produto.id!]
     );
   },
 
@@ -84,6 +84,14 @@ export const ProdutoDAO = {
     const db = getDatabase();
     await db.runAsync(
       'UPDATE produtos SET disponivel = CASE WHEN disponivel = 1 THEN 0 ELSE 1 END WHERE id = ?',
+      [id]
+    );
+  },
+
+  async toggleDestaque(id: number): Promise<void> {
+    const db = getDatabase();
+    await db.runAsync(
+      'UPDATE produtos SET destaque = CASE WHEN destaque = 1 THEN 0 ELSE 1 END WHERE id = ?',
       [id]
     );
   },

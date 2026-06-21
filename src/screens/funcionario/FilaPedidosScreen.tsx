@@ -1,16 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../utils/theme';
 import { usePedidos } from '../../viewmodels/usePedidos';
 import { StatusPedido } from '../../models';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
-const STATUS_FILTROS = [
-  { key: undefined, label: 'Todos' },
-  { key: 'em_preparo' as StatusPedido, label: '🔥 Em preparo' },
-  { key: 'pronto' as StatusPedido, label: '✅ Prontos' },
-  { key: 'entregue' as StatusPedido, label: '📦 Entregue' },
+const STATUS_FILTROS: { key: StatusPedido | undefined; label: string; icone: string }[] = [
+  { key: undefined, label: 'Todos', icone: 'grid-outline' },
+  { key: 'em_preparo', label: 'Em preparo', icone: 'flame-outline' },
+  { key: 'pronto', label: 'Prontos', icone: 'checkmark-circle-outline' },
+  { key: 'entregue', label: 'Entregue', icone: 'cube-outline' },
 ];
 
 const statusColors: Record<StatusPedido, string> = {
@@ -25,11 +26,18 @@ const statusLabels: Record<StatusPedido, string> = {
   entregue: 'Entregue',
 };
 
+const statusIcones: Record<StatusPedido, string> = {
+  em_preparo: 'flame-outline',
+  pronto: 'checkmark-circle-outline',
+  entregue: 'cube-outline',
+};
+
 const STATUS_ORDER: StatusPedido[] = ['em_preparo', 'pronto', 'entregue'];
 
 export function FilaPedidosScreen() {
   const navigation = useNavigation<any>();
   const { pedidos, loading, statusFiltro, filtrarStatus, atualizarStatus, excluir, tempoRelativo } = usePedidos();
+  const [modalExcluir, setModalExcluir] = useState<number | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -49,10 +57,11 @@ export function FilaPedidosScreen() {
           <View style={styles.cardTopLeft}>
             <Text style={styles.cardNumero}>#{String(item.numero).padStart(3, '0')}</Text>
             <View style={[styles.statusBadge, { backgroundColor: cor + '22' }]}>
+              <Ionicons name={statusIcones[item.status] as any} size={11} color={cor} />
               <Text style={[styles.statusBadgeText, { color: cor }]}>{statusLabels[item.status]}</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => excluir(item.id!)}>
+          <TouchableOpacity onPress={() => setModalExcluir(item.id!)}>
             <Ionicons name="trash-outline" size={18} color={Colors.delete} />
           </TouchableOpacity>
         </View>
@@ -70,6 +79,7 @@ export function FilaPedidosScreen() {
                 style={[styles.radioBtn, ativo && { backgroundColor: c, borderColor: c }]}
                 onPress={() => atualizarStatus(item.id!, s)}
               >
+                <Ionicons name={statusIcones[s] as any} size={13} color={ativo ? Colors.white : Colors.muted} />
                 <Text style={[styles.radioBtnText, ativo && { color: Colors.white }]}>
                   {statusLabels[s]}
                 </Text>
@@ -86,15 +96,19 @@ export function FilaPedidosScreen() {
       <Text style={styles.pageTitle}>Fila de Pedidos</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtroScroll} contentContainerStyle={styles.filtroContent}>
-        {STATUS_FILTROS.map((f) => (
-          <TouchableOpacity
-            key={String(f.key)}
-            style={[styles.filtroChip, statusFiltro === f.key && styles.filtroChipActive]}
-            onPress={() => filtrarStatus(f.key)}
-          >
-            <Text style={[styles.filtroText, statusFiltro === f.key && styles.filtroTextActive]}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {STATUS_FILTROS.map((f) => {
+          const ativo = statusFiltro === f.key;
+          return (
+            <TouchableOpacity
+              key={String(f.key)}
+              style={[styles.filtroChip, ativo && styles.filtroChipActive]}
+              onPress={() => filtrarStatus(f.key)}
+            >
+              <Ionicons name={f.icone as any} size={13} color={ativo ? Colors.background : Colors.muted} />
+              <Text style={[styles.filtroText, ativo && styles.filtroTextActive]}>{f.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {loading ? (
@@ -109,30 +123,44 @@ export function FilaPedidosScreen() {
           ListEmptyComponent={<Text style={styles.vazio}>Nenhum pedido encontrado.</Text>}
         />
       )}
+
+      <ConfirmModal
+        visible={modalExcluir !== null}
+        titulo="Excluir pedido"
+        mensagem="Deseja remover este pedido permanentemente?"
+        textoConfirmar="Excluir"
+        icone="trash-outline"
+        destrutivo
+        onCancelar={() => setModalExcluir(null)}
+        onConfirmar={() => {
+          if (modalExcluir !== null) excluir(modalExcluir);
+          setModalExcluir(null);
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  pageTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary, padding: Spacing.lg, paddingBottom: Spacing.sm },
+  pageTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary, padding: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: Spacing.sm },
   filtroScroll: { flexGrow: 0, flexShrink: 0 },
   filtroContent: { paddingHorizontal: Spacing.lg, gap: Spacing.sm, paddingVertical: Spacing.sm, flexDirection: 'row' },
-  filtroChip: { paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border },
+  filtroChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border },
   filtroChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filtroText: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.muted },
   filtroTextActive: { color: Colors.background },
-  list: { padding: Spacing.lg, gap: Spacing.md },
+  list: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xxl },
   vazio: { fontSize: Fonts.sizes.md, color: Colors.muted, textAlign: 'center', paddingVertical: Spacing.xl },
   card: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.md, borderLeftWidth: 5, gap: 4, ...Shadow.card },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTopLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   cardNumero: { fontSize: Fonts.sizes.lg, fontWeight: '800', color: Colors.primary },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
   statusBadgeText: { fontSize: Fonts.sizes.xs, fontWeight: '700' },
   cardCliente: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.primary },
   cardTempo: { fontSize: Fonts.sizes.xs, color: Colors.muted },
   radioRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  radioBtn: { flex: 1, paddingVertical: 6, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.border, alignItems: 'center' },
+  radioBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 6, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.border },
   radioBtnText: { fontSize: Fonts.sizes.xs, fontWeight: '700', color: Colors.muted },
 });

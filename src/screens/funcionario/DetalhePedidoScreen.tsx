@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
 import { PedidoDAO } from '../../database/PedidoDAO';
 import { Pedido, StatusPedido } from '../../models';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
-const STATUS_OPTIONS: { key: StatusPedido; label: string }[] = [
-  { key: 'em_preparo', label: '🔥 Em preparo' },
-  { key: 'pronto', label: '✅ Pronto' },
-  { key: 'entregue', label: '📦 Entregue' },
+const STATUS_OPTIONS: { key: StatusPedido; label: string; icone: string }[] = [
+  { key: 'em_preparo', label: 'Em preparo', icone: 'flame-outline' },
+  { key: 'pronto', label: 'Pronto', icone: 'checkmark-circle-outline' },
+  { key: 'entregue', label: 'Entregue', icone: 'cube-outline' },
 ];
 
 const statusColors: Record<StatusPedido, string> = {
@@ -25,10 +26,9 @@ export function DetalhePedidoScreen() {
 
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modalExcluir, setModalExcluir] = useState(false);
 
-  useEffect(() => {
-    carregar();
-  }, []);
+  useEffect(() => { carregar(); }, []);
 
   const carregar = async () => {
     setLoading(true);
@@ -43,22 +43,6 @@ export function DetalhePedidoScreen() {
     setPedido((prev) => prev ? { ...prev, status } : prev);
   };
 
-  const handleExcluir = () => {
-    Alert.alert(
-      'Excluir pedido',
-      'Deseja remover este pedido permanentemente?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir', style: 'destructive', onPress: async () => {
-            await PedidoDAO.excluir(pedidoId);
-            navigation.goBack();
-          }
-        },
-      ]
-    );
-  };
-
   if (loading) return <ActivityIndicator color={Colors.primary} style={{ flex: 1 }} />;
   if (!pedido) return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -67,9 +51,11 @@ export function DetalhePedidoScreen() {
   );
 
   const cor = statusColors[pedido.status];
+  const statusAtual = STATUS_OPTIONS.find((s) => s.key === pedido.status);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
         <Ionicons name="chevron-back" size={22} color={Colors.primary} />
         <Text style={styles.backText}>Pedido</Text>
@@ -83,9 +69,8 @@ export function DetalhePedidoScreen() {
             <Text style={styles.pedidoData}>{new Date(pedido.data_criacao).toLocaleString('pt-BR')}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: cor + '22' }]}>
-            <Text style={[styles.statusText, { color: cor }]}>
-              {STATUS_OPTIONS.find((s) => s.key === pedido.status)?.label}
-            </Text>
+            <Ionicons name={statusAtual?.icone as any} size={12} color={cor} />
+            <Text style={[styles.statusText, { color: cor }]}>{statusAtual?.label}</Text>
           </View>
         </View>
       </View>
@@ -132,23 +117,40 @@ export function DetalhePedidoScreen() {
               <View style={[styles.radioOuter, { borderColor: ativo ? c : Colors.border }]}>
                 {ativo && <View style={[styles.radioInner, { backgroundColor: c }]} />}
               </View>
+              <Ionicons name={opt.icone as any} size={18} color={ativo ? c : Colors.muted} />
               <Text style={[styles.radioLabel, ativo && { color: c, fontWeight: '700' }]}>{opt.label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <TouchableOpacity style={styles.btnExcluir} onPress={handleExcluir}>
+      <TouchableOpacity style={styles.btnExcluir} onPress={() => setModalExcluir(true)}>
         <Ionicons name="trash-outline" size={18} color={Colors.delete} />
         <Text style={styles.btnExcluirText}>Excluir Pedido</Text>
       </TouchableOpacity>
+
+      <ConfirmModal
+        visible={modalExcluir}
+        titulo="Excluir pedido"
+        mensagem="Deseja remover este pedido permanentemente?"
+        textoConfirmar="Excluir"
+        icone="trash-outline"
+        destrutivo
+        onCancelar={() => setModalExcluir(false)}
+        onConfirmar={async () => {
+          await PedidoDAO.excluir(pedidoId);
+          setModalExcluir(false);
+          navigation.goBack();
+        }}
+      />
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: 40 },
+  scroll: { padding: Spacing.lg, paddingTop: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxl },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backText: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.primary },
   pedidoCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, borderLeftWidth: 5, ...Shadow.card },
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
   pedidoNumero: { fontSize: Fonts.sizes.xxl, fontWeight: '900', color: Colors.primary },
   pedidoCliente: { fontSize: Fonts.sizes.md, color: Colors.muted },
   pedidoData: { fontSize: Fonts.sizes.sm, color: Colors.muted },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full },
   statusText: { fontSize: Fonts.sizes.xs, fontWeight: '700' },
   section: { gap: Spacing.sm },
   sectionLabel: { fontSize: Fonts.sizes.xs, fontWeight: '700', color: Colors.muted, letterSpacing: 1.5 },
@@ -174,6 +176,6 @@ const styles = StyleSheet.create({
   radioOuter: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioInner: { width: 11, height: 11, borderRadius: 6 },
   radioLabel: { fontSize: Fonts.sizes.md, color: Colors.muted },
-  btnExcluir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, borderWidth: 1.5, borderColor: Colors.delete, borderRadius: Radius.md, paddingVertical: 14, marginTop: Spacing.sm },
+  btnExcluir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, borderWidth: 1.5, borderColor: Colors.delete, borderRadius: Radius.md, paddingVertical: 14 },
   btnExcluirText: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.delete },
 });

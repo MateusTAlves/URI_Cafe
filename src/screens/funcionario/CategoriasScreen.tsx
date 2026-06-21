@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../utils/theme';
 import { useCategorias } from '../../viewmodels/useCategorias';
 import { Categoria } from '../../models';
 import { useFocusEffect } from '@react-navigation/native';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 const ICONES = ['cafe', 'fast-food', 'ice-cream', 'pizza', 'nutrition', 'beer', 'basket'] as const;
-const CORES = ['#E07B39', '#3A8F5C', '#C8973A', '#3D1C02', '#8A6A5A', '#C0392B'];
+const CORES = [
+  '#E07B39', '#3A8F5C', '#C8973A', '#3D1C02',
+  '#8A6A5A', '#C0392B', '#2980B9', '#8E44AD',
+  '#16A085', '#D35400', '#27AE60', '#2C3E50',
+];
 
 export function CategoriasScreen() {
   const { categorias, loading, carregar, salvar, excluir } = useCategorias();
   const [nome, setNome] = useState('');
   const [iconeSelecionado, setIconeSelecionado] = useState<string>('cafe');
   const [corSelecionada, setCorSelecionada] = useState(CORES[0]);
+  const [modalExcluir, setModalExcluir] = useState<Categoria | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -25,13 +31,6 @@ export function CategoriasScreen() {
     if (!nome.trim()) return;
     const ok = await salvar({ nome: nome.trim(), icone: iconeSelecionado, cor: corSelecionada });
     if (ok) setNome('');
-  };
-
-  const handleExcluir = (cat: Categoria) => {
-    Alert.alert('Excluir categoria', `Deseja excluir "${cat.nome}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => excluir(cat.id!) },
-    ]);
   };
 
   return (
@@ -48,7 +47,7 @@ export function CategoriasScreen() {
             </View>
             <Text style={styles.catNome}>{cat.nome}</Text>
             <View style={[styles.corDot, { backgroundColor: cat.cor }]} />
-            <TouchableOpacity style={styles.actionBtn} onPress={() => handleExcluir(cat)}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setModalExcluir(cat)}>
               <Ionicons name="trash-outline" size={18} color={Colors.delete} />
             </TouchableOpacity>
           </View>
@@ -100,6 +99,20 @@ export function CategoriasScreen() {
           <Text style={styles.btnSalvarText}>Salvar</Text>
         </TouchableOpacity>
       </View>
+
+      <ConfirmModal
+        visible={modalExcluir !== null}
+        titulo="Excluir categoria"
+        mensagem={`Deseja excluir "${modalExcluir?.nome}"?`}
+        textoConfirmar="Excluir"
+        icone="trash-outline"
+        destrutivo
+        onCancelar={() => setModalExcluir(null)}
+        onConfirmar={() => {
+          if (modalExcluir !== null) excluir(modalExcluir.id!);
+          setModalExcluir(null);
+        }}
+      />
     </ScrollView>
   );
 }

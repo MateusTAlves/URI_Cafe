@@ -1,12 +1,11 @@
-// src/screens/funcionario/LoginFuncionarioScreen.tsx
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, ScrollView,
+  TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../utils/theme';
+import { Colors, Fonts, Spacing, Radius } from '../../utils/theme';
 
 const USUARIO_CORRETO = 'admin';
 const SENHA_CORRETA = '1234';
@@ -16,14 +15,18 @@ export function LoginFuncionarioScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [lembrar, setLembrar] = useState(true);
   const [erro, setErro] = useState('');
 
   const handleEntrar = () => {
-    if (!usuario || !senha) {
+    const usuarioLimpo = usuario.trim();
+    const senhaLimpa = senha.trim();
+
+    if (!usuarioLimpo || !senhaLimpa) {
       setErro('Preencha todos os campos.');
       return;
     }
-    if (usuario === USUARIO_CORRETO && senha === SENHA_CORRETA) {
+    if (usuarioLimpo === USUARIO_CORRETO && senhaLimpa === SENHA_CORRETA) {
       setErro('');
       navigation.replace('TabFuncionario');
     } else {
@@ -31,72 +34,78 @@ export function LoginFuncionarioScreen() {
     }
   };
 
+  const handleEsqueciSenha = () => {
+    // Troque por navigation.navigate('NomeDaTela') quando a tela de
+    // recuperação de senha existir no seu app.
+    Alert.alert(
+      'Esqueci a senha',
+      'Funcionalidade ainda não disponível. Procure o administrador do sistema.'
+    );
+  };
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: Colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Botão voltar */}
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={22} color={Colors.background} />
+          <Ionicons name="chevron-back" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Topo escuro com título */}
         <View style={styles.topSection}>
-          <View style={styles.iconBox}>
-            <Ionicons name="lock-closed" size={32} color={Colors.accent} />
+          {/* Logo do URI Café */}
+          <View style={styles.logoBox}>
+            <Image
+              source={require('../../../assets/images/logo_cafe.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.title}>Área Restrita</Text>
           <Text style={styles.subtitle}>Acesso exclusivo para funcionários</Text>
         </View>
 
-        {/* Card de formulário */}
-        <View style={styles.card}>
-          {/* Campo usuário */}
+        <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Usuário</Text>
+            <Text style={styles.label}>USUÁRIO</Text>
             <View style={styles.inputBox}>
-              <Ionicons name="person-outline" size={18} color={Colors.muted} />
               <TextInput
                 style={styles.input}
-                placeholder="Digite seu usuário"
+                placeholder="funcionario.uri"
                 placeholderTextColor={Colors.muted}
                 value={usuario}
                 onChangeText={(t) => { setUsuario(t); setErro(''); }}
                 autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
           </View>
 
-          {/* Campo senha */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Senha</Text>
+            <Text style={styles.label}>SENHA</Text>
             <View style={styles.inputBox}>
-              <Ionicons name="key-outline" size={18} color={Colors.muted} />
               <TextInput
                 style={styles.input}
-                placeholder="Digite sua senha"
+                placeholder="••••••••"
                 placeholderTextColor={Colors.muted}
                 value={senha}
                 onChangeText={(t) => { setSenha(t); setErro(''); }}
                 secureTextEntry={!senhaVisivel}
                 autoCapitalize="none"
+                autoCorrect={false}
               />
               <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-                <Ionicons
-                  name={senhaVisivel ? 'eye-off-outline' : 'eye-outline'}
-                  size={18}
-                  color={Colors.muted}
-                />
+                <Text style={styles.linkText}>
+                  {senhaVisivel ? 'Ocultar' : 'Mostrar'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Erro */}
           {erro ? (
             <View style={styles.erroBox}>
               <Ionicons name="alert-circle-outline" size={16} color={Colors.delete} />
@@ -104,10 +113,29 @@ export function LoginFuncionarioScreen() {
             </View>
           ) : null}
 
-          {/* Botão entrar */}
-          <TouchableOpacity style={styles.btnEntrar} onPress={handleEntrar} activeOpacity={0.85}>
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => setLembrar(!lembrar)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, lembrar && styles.checkboxAtivo]}>
+                {lembrar && <Ionicons name="checkmark" size={14} color={Colors.background} />}
+              </View>
+              <Text style={styles.checkboxLabel}>Lembrar de mim</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleEsqueciSenha}>
+              <Text style={styles.linkText}>Esqueci a senha</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={styles.btnEntrar}
+            onPress={handleEntrar}
+            activeOpacity={0.85}
+          >
             <Text style={styles.btnEntrarText}>Entrar</Text>
-            <Ionicons name="arrow-forward" size={18} color={Colors.background} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -118,63 +146,72 @@ export function LoginFuncionarioScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   backBtn: {
-    position: 'absolute',
-    top: 50,
-    left: Spacing.lg,
-    zIndex: 10,
-    padding: Spacing.sm,
-  },
-
-  topSection: {
-    alignItems: 'center',
-    paddingTop: 100,
-    paddingBottom: Spacing.xxl,
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  iconBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(200,151,58,0.15)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,151,58,0.3)',
-    marginBottom: Spacing.sm,
+    marginTop: 50,
+    marginBottom: Spacing.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  topSection: {
+    alignItems: 'center',
+    paddingBottom: Spacing.xxl,
+    gap: Spacing.xs,
+  },
+  logoBox: {
+    width: 88,
+    height: 88,
+    borderRadius: Radius.lg ?? 22,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
   },
   title: {
     fontSize: Fonts.sizes.xxl,
     fontWeight: '800',
-    color: Colors.background,
+    color: Colors.primary,
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: Fonts.sizes.sm,
-    color: Colors.background,
-    opacity: 0.5,
+    color: Colors.accent,
+    fontWeight: '500',
   },
-
-  card: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: Spacing.xl,
+  form: {
     gap: Spacing.lg,
-    paddingTop: Spacing.xxl,
   },
-
   inputGroup: {
     gap: Spacing.xs,
   },
   label: {
-    fontSize: Fonts.sizes.sm,
+    fontSize: Fonts.sizes.xs,
     fontWeight: '700',
     color: Colors.primary,
+    letterSpacing: 0.5,
     marginLeft: 4,
   },
   inputBox: {
@@ -182,18 +219,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg ?? 18,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    paddingVertical: 16,
   },
   input: {
     flex: 1,
     fontSize: Fonts.sizes.md,
     color: Colors.primary,
   },
-
+  linkText: {
+    fontSize: Fonts.sizes.sm,
+    fontWeight: '700',
+    color: Colors.accent,
+  },
   erroBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -207,15 +246,40 @@ const styles = StyleSheet.create({
     color: Colors.delete,
     fontWeight: '600',
   },
-
-  btnEntrar: {
+  optionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxAtivo: {
     backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: 16,
+    borderColor: Colors.primary,
+  },
+  checkboxLabel: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  btnEntrar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.xl ?? 30,
+    paddingVertical: 18,
     marginTop: Spacing.sm,
   },
   btnEntrarText: {

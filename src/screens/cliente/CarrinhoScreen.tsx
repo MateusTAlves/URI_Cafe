@@ -26,6 +26,10 @@ export function CarrinhoScreen() {
   const [salvando, setSalvando] = useState(false);
   const { criarPedido } = usePedidos();
 
+  const handleVoltar = () => {
+    navigation.navigate('Cardapio', { carrinhoAtualizado: itens });
+  };
+
   const alterar = (id: number, delta: number) => {
     setItens((prev) => {
       const idx = prev.findIndex((i) => i.id === id);
@@ -85,40 +89,44 @@ export function CarrinhoScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleVoltar} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Meu Pedido</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Itens */}
-        {itens.map((item) => (
-          <View key={item.id} style={styles.itemRow}>
-            <View style={[styles.itemIcon, { backgroundColor: item.produto.categoria_cor ?? Colors.primary }]}>
-              <Ionicons name="fast-food" size={18} color="#fff" />
-            </View>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemNome}>{item.produto.nome}</Text>
-              <Text style={styles.itemPreco}>{formatCurrency(item.produto.preco * item.quantidade)}</Text>
-            </View>
-            <View style={styles.qtdControle}>
-              <TouchableOpacity style={styles.qtdBtn} onPress={() => alterar(item.id, -1)}>
-                <Ionicons name="remove" size={16} color={Colors.primary} />
-              </TouchableOpacity>
-              <Text style={styles.qtdText}>{item.quantidade}</Text>
-              <TouchableOpacity style={[styles.qtdBtn, styles.qtdBtnAdd]} onPress={() => alterar(item.id, 1)}>
-                <Ionicons name="add" size={16} color={Colors.background} />
-              </TouchableOpacity>
-            </View>
+        {itens.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Ionicons name="cart-outline" size={48} color={Colors.border} />
+            <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
           </View>
-        ))}
+        ) : (
+          itens.map((item) => (
+            <View key={item.id} style={styles.itemRow}>
+              <View style={[styles.itemIcon, { backgroundColor: item.produto.categoria_cor ?? Colors.primary }]}>
+                <Ionicons name={(item.produto.categoria_icone as any) ?? 'fast-food'} size={18} color="#fff" />
+              </View>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemNome}>{item.produto.nome}</Text>
+                <Text style={styles.itemPreco}>{formatCurrency(item.produto.preco * item.quantidade)}</Text>
+              </View>
+              <View style={styles.qtdControle}>
+                <TouchableOpacity style={styles.qtdBtn} onPress={() => alterar(item.id, -1)}>
+                  <Ionicons name="remove" size={16} color={Colors.primary} />
+                </TouchableOpacity>
+                <Text style={styles.qtdText}>{item.quantidade}</Text>
+                <TouchableOpacity style={[styles.qtdBtn, styles.qtdBtnAdd]} onPress={() => alterar(item.id, 1)}>
+                  <Ionicons name="add" size={16} color={Colors.background} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
 
         <View style={styles.divider} />
 
-        {/* Campos */}
         <Text style={styles.fieldLabel}>Seu nome</Text>
         <TextInput
           style={styles.input}
@@ -140,7 +148,6 @@ export function CarrinhoScreen() {
         />
       </ScrollView>
 
-      {/* Rodapé */}
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Subtotal ({totalItens} itens)</Text>
@@ -176,6 +183,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   scroll: { padding: Spacing.lg, gap: Spacing.sm, paddingBottom: 200 },
+  emptyBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
+  emptyText: { fontSize: Fonts.sizes.md, color: Colors.muted },
   itemRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
     backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,

@@ -1,4 +1,3 @@
-// src/viewmodels/useProdutos.ts
 import { useState, useCallback } from 'react';
 import { ProdutoDAO } from '../database/ProdutoDAO';
 import { Produto } from '../models';
@@ -64,6 +63,11 @@ export function useProdutos(apenasDisponiveis = false) {
     await carregar(filtro, categoriaFiltro);
   }, [carregar, filtro, categoriaFiltro]);
 
+  const toggleDestaque = useCallback(async (id: number): Promise<void> => {
+    await ProdutoDAO.toggleDestaque(id);
+    await carregar(filtro, categoriaFiltro);
+  }, [carregar, filtro, categoriaFiltro]);
+
   const excluir = useCallback(async (id: number): Promise<boolean> => {
     try {
       await ProdutoDAO.excluir(id);
@@ -78,6 +82,6 @@ export function useProdutos(apenasDisponiveis = false) {
   return {
     produtos, destaques, loading, error, filtro, categoriaFiltro,
     carregar, carregarDestaques, buscar, filtrarCategoria,
-    salvar, toggleDisponivel, excluir, setError,
+    salvar, toggleDisponivel, toggleDestaque, excluir, setError,
   };
 }
