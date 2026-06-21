@@ -1,135 +1,226 @@
 // src/screens/funcionario/LoginFuncionarioScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Vibration } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  TextInput, KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../utils/theme';
 
+const USUARIO_CORRETO = 'admin';
 const SENHA_CORRETA = '1234';
-const TECLAS = ['1','2','3','4','5','6','7','8','9','0'];
 
 export function LoginFuncionarioScreen() {
   const navigation = useNavigation<any>();
-  const [pin, setPin] = useState('');
-  const [erro, setErro] = useState(false);
+  const [usuario, setUsuario] = useState('');
+  const [senha, setSenha] = useState('');
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [erro, setErro] = useState('');
 
-  const handleTecla = (tecla: string) => {
-    if (pin.length >= 4) return;
-    const novoPin = pin + tecla;
-    setPin(novoPin);
-    setErro(false);
-
-    if (novoPin.length === 4) {
-      setTimeout(() => {
-        if (novoPin === SENHA_CORRETA) {
-          navigation.replace('TabFuncionario');
-        } else {
-          Vibration.vibrate(300);
-          setErro(true);
-          setPin('');
-        }
-      }, 300);
+  const handleEntrar = () => {
+    if (!usuario || !senha) {
+      setErro('Preencha todos os campos.');
+      return;
+    }
+    if (usuario === USUARIO_CORRETO && senha === SENHA_CORRETA) {
+      setErro('');
+      navigation.replace('TabFuncionario');
+    } else {
+      setErro('Usuário ou senha incorretos.');
     }
   };
 
-  const handleApagar = () => {
-    setPin((prev) => prev.slice(0, -1));
-    setErro(false);
-  };
-
   return (
-    <View style={styles.container}>
-      {/* Botão voltar */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Ionicons name="chevron-back" size={22} color={Colors.muted} />
-      </TouchableOpacity>
-
-      {/* Logo */}
-      <View style={styles.logoBox}>
-        <Image
-          source={require('../../../assets/images/logo_cafe.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
-      <Text style={styles.title}>Área Restrita</Text>
-      <Text style={styles.subtitle}>
-        {erro ? '❌ Senha incorreta. Tente novamente.' : 'Digite a senha de acesso'}
-      </Text>
-
-      {/* Indicadores PIN */}
-      <View style={styles.pinRow}>
-        {[0,1,2,3].map((i) => (
-          <View key={i} style={[styles.pinDot, pin.length > i && styles.pinDotFilled, erro && styles.pinDotErro]} />
-        ))}
-      </View>
-
-      {/* Teclado */}
-      <View style={styles.teclado}>
-        {TECLAS.map((t) => (
-          <TouchableOpacity key={t} style={styles.tecla} onPress={() => handleTecla(t)} activeOpacity={0.7}>
-            <Text style={styles.teclaText}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-        <View style={styles.teclaVazia} />
-        <TouchableOpacity style={styles.tecla} onPress={() => handleTecla('0')} activeOpacity={0.7}>
-          <Text style={styles.teclaText}>0</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tecla} onPress={handleApagar} activeOpacity={0.7}>
-          <Ionicons name="backspace-outline" size={22} color={Colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.btnEntrar, pin.length < 4 && { opacity: 0.5 }]}
-        onPress={() => handleTecla('')}
-        disabled={pin.length < 4}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.btnEntrarText}>Entrar</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Botão voltar */}
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={22} color={Colors.background} />
+        </TouchableOpacity>
+
+        {/* Topo escuro com título */}
+        <View style={styles.topSection}>
+          <View style={styles.iconBox}>
+            <Ionicons name="lock-closed" size={32} color={Colors.accent} />
+          </View>
+          <Text style={styles.title}>Área Restrita</Text>
+          <Text style={styles.subtitle}>Acesso exclusivo para funcionários</Text>
+        </View>
+
+        {/* Card de formulário */}
+        <View style={styles.card}>
+          {/* Campo usuário */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Usuário</Text>
+            <View style={styles.inputBox}>
+              <Ionicons name="person-outline" size={18} color={Colors.muted} />
+              <TextInput
+                style={styles.input}
+                placeholder="Digite seu usuário"
+                placeholderTextColor={Colors.muted}
+                value={usuario}
+                onChangeText={(t) => { setUsuario(t); setErro(''); }}
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          {/* Campo senha */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Senha</Text>
+            <View style={styles.inputBox}>
+              <Ionicons name="key-outline" size={18} color={Colors.muted} />
+              <TextInput
+                style={styles.input}
+                placeholder="Digite sua senha"
+                placeholderTextColor={Colors.muted}
+                value={senha}
+                onChangeText={(t) => { setSenha(t); setErro(''); }}
+                secureTextEntry={!senhaVisivel}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
+                <Ionicons
+                  name={senhaVisivel ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={Colors.muted}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Erro */}
+          {erro ? (
+            <View style={styles.erroBox}>
+              <Ionicons name="alert-circle-outline" size={16} color={Colors.delete} />
+              <Text style={styles.erroText}>{erro}</Text>
+            </View>
+          ) : null}
+
+          {/* Botão entrar */}
+          <TouchableOpacity style={styles.btnEntrar} onPress={handleEntrar} activeOpacity={0.85}>
+            <Text style={styles.btnEntrarText}>Entrar</Text>
+            <Ionicons name="arrow-forward" size={18} color={Colors.background} />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, alignItems: 'center', padding: Spacing.xl, paddingTop: 60 },
-  backBtn: { position: 'absolute', top: 50, left: Spacing.lg, padding: Spacing.sm },
-
-  logoBox: {
-    width: 150, height: 150, backgroundColor: 'transparent',
-    borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center',
-    padding: 16, ...Shadow.card, marginBottom: Spacing.lg,
+  container: {
+    flexGrow: 1,
+    backgroundColor: Colors.primary,
   },
-  logo: { width: 120, height: 120 },
-
-  title: { fontSize: Fonts.sizes.xxl, fontWeight: '800', color: Colors.primary, marginBottom: 4 },
-  subtitle: { fontSize: Fonts.sizes.sm, color: Colors.muted, marginBottom: Spacing.xl },
-
-  pinRow: { flexDirection: 'row', gap: Spacing.xl, marginBottom: Spacing.xl },
-  pinDot: {
-    width: 18, height: 18, borderRadius: 9,
-    borderWidth: 2, borderColor: Colors.border, backgroundColor: 'transparent',
+  backBtn: {
+    position: 'absolute',
+    top: 50,
+    left: Spacing.lg,
+    zIndex: 10,
+    padding: Spacing.sm,
   },
-  pinDotFilled: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  pinDotErro: { borderColor: Colors.delete, backgroundColor: Colors.delete },
 
-  teclado: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'center', gap: Spacing.md,
-    width: '80%', marginBottom: Spacing.xl,
+  topSection: {
+    alignItems: 'center',
+    paddingTop: 100,
+    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
   },
-  tecla: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center',
-    ...Shadow.card,
+  iconBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(200,151,58,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(200,151,58,0.3)',
+    marginBottom: Spacing.sm,
   },
-  teclaText: { fontSize: Fonts.sizes.xl, fontWeight: '600', color: Colors.primary },
-  teclaVazia: { width: 72, height: 72 },
+  title: {
+    fontSize: Fonts.sizes.xxl,
+    fontWeight: '800',
+    color: Colors.background,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.background,
+    opacity: 0.5,
+  },
+
+  card: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+    paddingTop: Spacing.xxl,
+  },
+
+  inputGroup: {
+    gap: Spacing.xs,
+  },
+  label: {
+    fontSize: Fonts.sizes.sm,
+    fontWeight: '700',
+    color: Colors.primary,
+    marginLeft: 4,
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  input: {
+    flex: 1,
+    fontSize: Fonts.sizes.md,
+    color: Colors.primary,
+  },
+
+  erroBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: '#FEE2E2',
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+  },
+  erroText: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.delete,
+    fontWeight: '600',
+  },
 
   btnEntrar: {
-    backgroundColor: Colors.primary, borderRadius: Radius.full,
-    paddingVertical: 14, paddingHorizontal: 60, alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 16,
+    marginTop: Spacing.sm,
   },
-  btnEntrarText: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.background },
+  btnEntrarText: {
+    fontSize: Fonts.sizes.lg,
+    fontWeight: '700',
+    color: Colors.background,
+  },
 });

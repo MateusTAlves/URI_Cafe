@@ -64,14 +64,21 @@ export function CardapioGestaoScreen() {
         <Text style={styles.pageTitle}>Cardápio</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll} contentContainerStyle={styles.catContent}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.catScroll}
+        contentContainerStyle={styles.catContent}
+      >
         {CATEGORIAS.map((cat) => (
           <TouchableOpacity
             key={cat.id}
             style={[styles.catChip, catSelecionada === cat.id && styles.catChipActive]}
             onPress={() => setCatSelecionada(cat.id)}
           >
-            <Text style={[styles.catText, catSelecionada === cat.id && styles.catTextActive]}>{cat.nome}</Text>
+            <Text style={[styles.catText, catSelecionada === cat.id && styles.catTextActive]}>
+              {cat.nome}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -94,39 +101,130 @@ export function CardapioGestaoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, paddingBottom: Spacing.sm },
-  pageTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
-  catScroll: { marginTop: Spacing.md, minHeight: 56 },
-  catContent: { paddingHorizontal: Spacing.lg, gap: Spacing.sm, alignItems: 'center', paddingVertical: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  pageTitle: {
+    fontSize: Fonts.sizes.xl,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+
+  catScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  catContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
+    flexDirection: 'row',
+  },
   catChip: {
-    paddingHorizontal: Spacing.lg, paddingVertical: 10,
-    borderRadius: Radius.full, backgroundColor: Colors.white,
-    borderWidth: 1.5, borderColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
   },
-  catChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  catText: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.muted },
-  catTextActive: { color: Colors.background },
+  catChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  catText: {
+    fontSize: Fonts.sizes.sm,
+    fontWeight: '700',
+    color: Colors.muted,
+  },
+  catTextActive: {
+    color: Colors.background,
+  },
 
-  list: { padding: Spacing.lg, paddingBottom: 100 },
-  row: { justifyContent: 'space-between', marginBottom: Spacing.md },
+  list: {
+    padding: Spacing.lg,
+    paddingBottom: 100,
+  },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
 
-  card: { width: '48%', backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
-  cardImg: { height: 100, alignItems: 'center', justifyContent: 'center' },
-  cardActions: { position: 'absolute', top: 6, right: 6, flexDirection: 'row', gap: 4 },
+  card: {
+    width: '48%',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    ...Shadow.card,
+  },
+  cardImg: {
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardActions: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    flexDirection: 'row',
+    gap: 4,
+  },
   actionBtn: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardNome: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.primary, padding: Spacing.sm, paddingBottom: 0 },
-  cardDesc: { fontSize: Fonts.sizes.xs, color: Colors.muted, paddingHorizontal: Spacing.sm },
-  cardPreco: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.accent, paddingHorizontal: Spacing.sm },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingBottom: Spacing.sm },
-  switchLabel: { fontSize: Fonts.sizes.xs, color: Colors.muted },
+  cardNome: {
+    fontSize: Fonts.sizes.sm,
+    fontWeight: '700',
+    color: Colors.primary,
+    padding: Spacing.sm,
+    paddingBottom: 0,
+  },
+  cardDesc: {
+    fontSize: Fonts.sizes.xs,
+    color: Colors.muted,
+    paddingHorizontal: Spacing.sm,
+  },
+  cardPreco: {
+    fontSize: Fonts.sizes.md,
+    fontWeight: '700',
+    color: Colors.accent,
+    paddingHorizontal: Spacing.sm,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.sm,
+  },
+  switchLabel: {
+    fontSize: Fonts.sizes.xs,
+    color: Colors.muted,
+  },
 
   fab: {
-    position: 'absolute', bottom: 24, right: 24,
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center', ...Shadow.card,
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.card,
   },
 });

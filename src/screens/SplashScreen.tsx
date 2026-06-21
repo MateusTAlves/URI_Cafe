@@ -2,61 +2,41 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   StatusBar,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Colors, Fonts, Spacing } from '../utils/theme';
+import { Colors } from '../utils/theme';
+
+const { width } = Dimensions.get('window');
+const CIRCLE_SIZE = width * 0.7;
 
 export function SplashScreen() {
   const navigation = useNavigation<any>();
-
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoScale = useRef(new Animated.Value(0.8)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textY = useRef(new Animated.Value(16)).current;
-  const accentOpacity = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.85)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(logoOpacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.spring(logoScale, {
-          toValue: 1,
-          friction: 6,
-          tension: 80,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.parallel([
-        Animated.timing(textOpacity, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(textY, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.timing(accentOpacity, {
+    Animated.parallel([
+      Animated.timing(opacity, {
         toValue: 1,
-        duration: 300,
+        duration: 700,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 5,
+        tension: 60,
         useNativeDriver: true,
       }),
     ]).start();
 
     const timer = setTimeout(() => {
       navigation.replace('HomeCliente');
-    }, 2800);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -64,13 +44,12 @@ export function SplashScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-
       <Animated.View
         style={[
-          styles.logoBox,
+          styles.circle,
           {
-            opacity: logoOpacity,
-            transform: [{ scale: logoScale }],
+            opacity,
+            transform: [{ scale }],
           },
         ]}
       >
@@ -79,16 +58,6 @@ export function SplashScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-      </Animated.View>
-
-      <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textY }] }}>
-        <Text style={styles.appName}>URICafe</Text>
-      </Animated.View>
-
-      <Animated.View style={[styles.taglineRow, { opacity: accentOpacity }]}>
-        <View style={styles.line} />
-        <Text style={styles.tagline}>Peça agora, retire na lancheria</Text>
-        <View style={styles.line} />
       </Animated.View>
     </View>
   );
@@ -100,44 +69,24 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xl,
   },
-  logoBox: {
-    width: 140,
-    height: 140,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 36,
+  circle: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(200, 151, 58, 0.3)',
+    padding: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
   },
   logo: {
-    width: 100,
-    height: 100,
-  },
-  appName: {
-    fontSize: Fonts.sizes.xxxl,
-    color: Colors.accent,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  taglineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(200, 151, 58, 0.4)',
-  },
-  tagline: {
-    fontSize: Fonts.sizes.sm,
-    color: Colors.background,
-    opacity: 0.7,
-    letterSpacing: 0.4,
-    textAlign: 'center',
+    width: '100%',
+    height: '100%',
   },
 });

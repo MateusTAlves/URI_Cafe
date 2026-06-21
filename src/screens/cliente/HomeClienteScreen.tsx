@@ -8,7 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
 
-// Dados mockados por enquanto
 const DESTAQUES = [
   { id: 1, nome: 'Café Expresso', preco: 4.50, cor: '#3D1C02', icone: 'cafe' },
   { id: 2, nome: 'X-Burguer', preco: 12.90, cor: '#E07B39', icone: 'fast-food' },
@@ -72,26 +71,45 @@ export function HomeClienteScreen() {
           </ScrollView>
         </View>
 
-      </ScrollView>
+        {/* Spacer empurra o link para baixo */}
+        <View style={styles.spacer} />
 
-      {/* Link Área do Funcionário */}
-      <TouchableOpacity
-        style={styles.funcLink}
-        onPress={() => navigation.navigate('LoginFuncionario')}
-      >
-        <Text style={styles.funcLinkText}>Área do Funcionário</Text>
-      </TouchableOpacity>
+        {/* Link Área do Funcionário */}
+        <TouchableOpacity
+          style={styles.funcLink}
+          onPress={() => navigation.navigate('LoginFuncionario')}
+        >
+          <Text style={styles.funcLinkText}>Área do Funcionário</Text>
+        </TouchableOpacity>
+
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing.lg, paddingBottom: 60, alignItems: 'center', gap: Spacing.xl },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
+    alignItems: 'center',
+    gap: Spacing.xl,
+  },
 
-  logoArea: { alignItems: 'center', gap: Spacing.md, paddingTop: Spacing.xl },
-  logoBox: { width: 140, height: 140, backgroundColor: 'transparent', borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', padding: 16, ...Shadow.card },
-  logo: { width: 100, height: 100 },
+  logoArea: { alignItems: 'center', gap: Spacing.md },
+  logoBox: {
+    width: 180,
+    height: 180,
+    backgroundColor: 'transparent',
+    borderRadius: Radius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    ...Shadow.card,
+  },
+  logo: { width: 140, height: 140 },
   tagline: { fontSize: Fonts.sizes.md, color: Colors.muted, letterSpacing: 0.2 },
 
   btnCardapio: {
@@ -112,14 +130,21 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.lg, overflow: 'hidden', ...Shadow.card,
   },
   destaqueImg: { height: 100, alignItems: 'center', justifyContent: 'center' },
-  destaqueNome: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.primary, padding: Spacing.sm, paddingBottom: 0 },
-  destaqueFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.sm },
+  destaqueNome: {
+    fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.primary,
+    padding: Spacing.sm, paddingBottom: 0,
+  },
+  destaqueFooter: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', padding: Spacing.sm,
+  },
   destaquePreco: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.accent },
   addBtn: {
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
   },
 
-  funcLink: { position: 'absolute', bottom: 20, alignSelf: 'center' },
+  spacer: { flex: 1 },
+  funcLink: { marginBottom: Spacing.sm },
   funcLinkText: { fontSize: Fonts.sizes.sm, color: Colors.muted, textDecorationLine: 'underline' },
 });
