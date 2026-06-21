@@ -1,4 +1,3 @@
-// src/components/ConfirmModal.tsx
 import React from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback,
@@ -41,7 +40,6 @@ export function ConfirmModal({
           <TouchableWithoutFeedback>
             <View style={styles.card}>
 
-              {/* Ícone */}
               <View style={[
                 styles.iconBox,
                 { backgroundColor: destrutivo ? Colors.delete + '18' : Colors.accent + '18' },
@@ -53,11 +51,9 @@ export function ConfirmModal({
                 />
               </View>
 
-              {/* Texto */}
               <Text style={styles.titulo}>{titulo}</Text>
               <Text style={styles.mensagem}>{mensagem}</Text>
 
-              {/* Botões */}
               <View style={styles.botoesRow}>
                 <TouchableOpacity style={styles.btnCancelar} onPress={onCancelar} activeOpacity={0.8}>
                   <Text style={styles.btnCancelarText}>{textoCancelar}</Text>
@@ -78,6 +74,62 @@ export function ConfirmModal({
     </Modal>
   );
 }
+
+// ─── InfoModal ───────────────────────────────────────────────────────────────
+
+interface InfoModalProps {
+  visible: boolean;
+  titulo: string;
+  mensagem: string;
+  icone?: string;
+  textoBotao?: string;
+  onFechar: () => void;
+}
+
+export function InfoModal({
+  visible,
+  titulo,
+  mensagem,
+  icone = 'information-circle-outline',
+  textoBotao = 'Entendi',
+  onFechar,
+}: InfoModalProps) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onFechar}
+    >
+      <TouchableWithoutFeedback onPress={onFechar}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={styles.card}>
+
+              <View style={[styles.iconBox, { backgroundColor: Colors.accent + '18' }]}>
+                <Ionicons name={icone as any} size={32} color={Colors.accent} />
+              </View>
+
+              <Text style={styles.titulo}>{titulo}</Text>
+              <Text style={styles.mensagem}>{mensagem}</Text>
+
+              <TouchableOpacity
+                style={[styles.btnConfirmar, { width: '100%', flex: 0 }]}
+                onPress={onFechar}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.btnConfirmarText}>{textoBotao}</Text>
+              </TouchableOpacity>
+
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   overlay: {
