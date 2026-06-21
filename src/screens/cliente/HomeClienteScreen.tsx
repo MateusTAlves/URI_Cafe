@@ -1,21 +1,20 @@
-// src/screens/cliente/HomeClienteScreen.tsx
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View, Text, StyleSheet, Image, TouchableOpacity,
-  ScrollView, StatusBar,
+  ScrollView, StatusBar, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
-
-const DESTAQUES = [
-  { id: 1, nome: 'Café Expresso', preco: 4.50, cor: '#3D1C02', icone: 'cafe' },
-  { id: 2, nome: 'X-Burguer', preco: 12.90, cor: '#E07B39', icone: 'fast-food' },
-  { id: 3, nome: 'Brownie', preco: 6.00, cor: '#C8973A', icone: 'ice-cream' },
-];
+import { useProdutos } from '../../viewmodels/useProdutos';
 
 export function HomeClienteScreen() {
   const navigation = useNavigation<any>();
+  const { destaques, carregarDestaques, loading } = useProdutos(true);
+
+  useFocusEffect(useCallback(() => {
+    carregarDestaques();
+  }, []));
 
   return (
     <View style={styles.container}>
@@ -53,25 +52,31 @@ export function HomeClienteScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.destaquesScroll}>
-            {DESTAQUES.map((item) => (
-              <View key={item.id} style={styles.destaqueCard}>
-                <View style={[styles.destaqueImg, { backgroundColor: item.cor }]}>
-                  <Ionicons name={item.icone as any} size={32} color="#fff" />
+          {loading ? (
+            <ActivityIndicator color={Colors.primary} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.destaquesScroll}>
+              {destaques.map((item) => (
+                <View key={item.id} style={styles.destaqueCard}>
+                  <View style={[styles.destaqueImg, { backgroundColor: item.categoria_cor ?? Colors.primary }]}>
+                    <Ionicons name="fast-food" size={32} color="#fff" />
+                  </View>
+                  <Text style={styles.destaqueNome}>{item.nome}</Text>
+                  <View style={styles.destaqueFooter}>
+                    <Text style={styles.destaquePreco}>{formatCurrency(item.preco)}</Text>
+                    <TouchableOpacity
+                      style={styles.addBtn}
+                      onPress={() => navigation.navigate('Cardapio')}
+                    >
+                      <Ionicons name="add" size={18} color={Colors.background} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <Text style={styles.destaqueNome}>{item.nome}</Text>
-                <View style={styles.destaqueFooter}>
-                  <Text style={styles.destaquePreco}>{formatCurrency(item.preco)}</Text>
-                  <TouchableOpacity style={styles.addBtn}>
-                    <Ionicons name="add" size={18} color={Colors.background} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
-        {/* Spacer empurra o link para baixo */}
         <View style={styles.spacer} />
 
         {/* Link Área do Funcionário */}
@@ -97,33 +102,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xl,
   },
-
   logoArea: { alignItems: 'center', gap: Spacing.md },
   logoBox: {
-    width: 180,
-    height: 180,
-    backgroundColor: 'transparent',
-    borderRadius: Radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    ...Shadow.card,
+    width: 180, height: 180, backgroundColor: 'transparent',
+    borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center',
+    padding: 16, ...Shadow.card,
   },
   logo: { width: 140, height: 140 },
   tagline: { fontSize: Fonts.sizes.md, color: Colors.muted, letterSpacing: 0.2 },
-
   btnCardapio: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing.sm, backgroundColor: Colors.primary, borderRadius: Radius.full,
     paddingVertical: 16, width: '100%', ...Shadow.card,
   },
   btnCardapioText: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.background },
-
   section: { width: '100%', gap: Spacing.md },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: Fonts.sizes.lg, fontWeight: '800', color: Colors.primary },
   verTodos: { fontSize: Fonts.sizes.sm, color: Colors.accent, fontWeight: '600' },
-
   destaquesScroll: { marginHorizontal: -Spacing.lg },
   destaqueCard: {
     width: 140, backgroundColor: Colors.white, borderRadius: Radius.lg,
@@ -143,7 +139,6 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
   },
-
   spacer: { flex: 1 },
   funcLink: { marginBottom: Spacing.sm },
   funcLinkText: { fontSize: Fonts.sizes.sm, color: Colors.muted, textDecorationLine: 'underline' },

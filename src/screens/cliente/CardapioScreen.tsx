@@ -1,69 +1,72 @@
-// src/screens/cliente/CardapioScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ScrollView, FlatList,
+  ScrollView, FlatList, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
+import { useProdutos } from '../../viewmodels/useProdutos';
+import { useCategorias } from '../../viewmodels/useCategorias';
+import { Produto } from '../../models';
 
-const CATEGORIAS = [
-  { id: 0, nome: 'Todos', icone: 'grid' },
-  { id: 1, nome: 'Lanches', icone: 'fast-food' },
-  { id: 2, nome: 'Bebidas', icone: 'cafe' },
-  { id: 3, nome: 'Doces', icone: 'ice-cream' },
-  { id: 4, nome: 'Salgados', icone: 'pizza' },
-];
+// Ícone por categoria
+const iconeCategoria: Record<string, string> = {
+  lanches: 'fast-food',
+  bebidas: 'cafe',
+  doces: 'ice-cream',
+  salgados: 'pizza',
+};
 
-const PRODUTOS = [
-  { id: 1, nome: 'Café Expresso', descricao: 'Grão arábica torra média', preco: 4.50, categoriaId: 2, cor: '#3D1C02' },
-  { id: 2, nome: 'Cappuccino', descricao: 'Espresso, leite, canela', preco: 7.50, categoriaId: 2, cor: '#3D1C02' },
-  { id: 3, nome: 'X-Burguer', descricao: 'Pão, hambúrguer, queijo', preco: 12.90, categoriaId: 1, cor: '#E07B39' },
-  { id: 4, nome: 'Brownie', descricao: 'Chocolate belga', preco: 6.00, categoriaId: 3, cor: '#C8973A' },
-  { id: 5, nome: 'Coxinha', descricao: 'Frango com catupiry', preco: 5.00, categoriaId: 4, cor: '#8A6A5A' },
-  { id: 6, nome: 'Suco de Laranja', descricao: 'Natural 300ml', preco: 6.50, categoriaId: 2, cor: '#E07B39' },
-];
+function getIconeCategoria(nomeCategoria?: string): string {
+  if (!nomeCategoria) return 'restaurant';
+  const key = nomeCategoria.toLowerCase();
+  return iconeCategoria[key] ?? 'restaurant';
+}
 
 export function CardapioScreen() {
   const navigation = useNavigation<any>();
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState(0);
-  const [busca, setBusca] = useState('');
-  const [carrinho, setCarrinho] = useState<{ id: number; quantidade: number }[]>([]);
+  const { produtos, loading, buscar, filtrarCategoria, categoriaFiltro } = useProdutos(true);
+  const { categorias, carregar: carregarCategorias } = useCategorias();
+  const [carrinho, setCarrinho] = useState<{ id: number; quantidade: number; produto: Produto }[]>([]);
+
+  useFocusEffect(useCallback(() => {
+    buscar('');
+    carregarCategorias();
+  }, []));
 
   const totalItens = carrinho.reduce((s, i) => s + i.quantidade, 0);
 
-  const produtosFiltrados = PRODUTOS.filter((p) => {
-    const matchCategoria = categoriaSelecionada === 0 || p.categoriaId === categoriaSelecionada;
-    const matchBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
-    return matchCategoria && matchBusca;
-  });
-
-  const adicionarAoCarrinho = (produtoId: number) => {
+  const adicionarAoCarrinho = (produto: Produto) => {
     setCarrinho((prev) => {
-      const idx = prev.findIndex((i) => i.id === produtoId);
+      const idx = prev.findIndex((i) => i.id === produto.id);
       if (idx >= 0) {
         const novo = [...prev];
         novo[idx] = { ...novo[idx], quantidade: novo[idx].quantidade + 1 };
         return novo;
       }
-      return [...prev, { id: produtoId, quantidade: 1 }];
+      return [...prev, { id: produto.id!, quantidade: 1, produto }];
     });
   };
 
-  const renderProduto = ({ item }: { item: typeof PRODUTOS[0] }) => (
-    <View style={styles.produtoCard}>
-      <View style={[styles.produtoImg, { backgroundColor: item.cor }]}>
-        <Ionicons name="fast-food" size={36} color="#fff" />
+  const renderProduto = ({ item }: { item: Produto }) => {
+    const corFundo = item.categoria_cor ?? Colors.primary;
+    const icone = getIconeCategoria(item.categoria_nome);
+
+    return (
+      <View style={styles.produtoCard}>
+        <View style={[styles.produtoImg, { backgroundColor: corFundo }]}>
+          <Ionicons name={icone as any} size={36} color="#fff" />
+        </View>
+        <Text style={styles.produtoNome}>{item.nome}</Text>
+        <Text style={styles.produtoDesc} numberOfLines={1}>{item.descricao}</Text>
+        <Text style={styles.produtoPreco}>{formatCurrency(item.preco)}</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => adicionarAoCarrinho(item)}>
+          <Text style={styles.addBtnText}>+ Adicionar</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.produtoNome}>{item.nome}</Text>
-      <Text style={styles.produtoDesc} numberOfLines={1}>{item.descricao}</Text>
-      <Text style={styles.produtoPreco}>{formatCurrency(item.preco)}</Text>
-      <TouchableOpacity style={styles.addBtn} onPress={() => adicionarAoCarrinho(item.id)}>
-        <Text style={styles.addBtnText}>+ Adicionar</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -82,8 +85,7 @@ export function CardapioScreen() {
           style={styles.searchInput}
           placeholder="Buscar produto..."
           placeholderTextColor={Colors.muted}
-          value={busca}
-          onChangeText={setBusca}
+          onChangeText={buscar}
         />
       </View>
 
@@ -94,46 +96,71 @@ export function CardapioScreen() {
         contentContainerStyle={styles.categoriasContent}
         style={styles.categoriasScroll}
       >
-        {CATEGORIAS.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoriaChip,
-              categoriaSelecionada === cat.id && styles.categoriaChipActive,
-            ]}
-            onPress={() => setCategoriaSelecionada(cat.id)}
-          >
-            <Ionicons
-              name={cat.icone as any}
-              size={14}
-              color={categoriaSelecionada === cat.id ? Colors.background : Colors.muted}
-            />
-            <Text style={[
-              styles.categoriaText,
-              categoriaSelecionada === cat.id && styles.categoriaTextActive,
-            ]}>
-              {cat.nome}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {/* Chip Todos */}
+        <TouchableOpacity
+          style={[
+            styles.categoriaChip,
+            !categoriaFiltro && { backgroundColor: Colors.primary, borderColor: Colors.primary },
+          ]}
+          onPress={() => filtrarCategoria(undefined)}
+        >
+          <Ionicons
+            name="grid"
+            size={14}
+            color={!categoriaFiltro ? Colors.background : Colors.muted}
+          />
+          <Text style={[styles.categoriaText, !categoriaFiltro && styles.categoriaTextActive]}>
+            Todos
+          </Text>
+        </TouchableOpacity>
+
+        {/* Chips de cada categoria com sua cor */}
+        {categorias.map((cat) => {
+          const ativo = categoriaFiltro === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoriaChip,
+                ativo && { backgroundColor: cat.cor, borderColor: cat.cor },
+              ]}
+              onPress={() => filtrarCategoria(cat.id)}
+            >
+              <Ionicons
+                name={cat.icone as any}
+                size={14}
+                color={ativo ? Colors.background : Colors.muted}
+              />
+              <Text style={[styles.categoriaText, ativo && styles.categoriaTextActive]}>
+                {cat.nome}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Grid de produtos */}
-      <FlatList
-        data={produtosFiltrados}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
-        renderItem={renderProduto}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={produtos}
+          keyExtractor={(item) => String(item.id)}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContent}
+          renderItem={renderProduto}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Badge do carrinho */}
       {totalItens > 0 && (
         <TouchableOpacity
           style={styles.carrinhoBadge}
-          onPress={() => navigation.navigate('Carrinho', { carrinho, produtos: PRODUTOS })}
+          onPress={() => navigation.navigate('Carrinho', { carrinho })}
         >
           <Ionicons name="cart" size={24} color={Colors.background} />
           <View style={styles.badgeCount}>
@@ -146,167 +173,61 @@ export function CardapioScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
+  container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, paddingBottom: Spacing.md,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.card,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', ...Shadow.card,
   },
-  headerTitle: {
-    fontSize: Fonts.sizes.xl,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-
+  headerTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.white,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    ...Shadow.card,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    backgroundColor: Colors.white, marginHorizontal: Spacing.lg, marginBottom: Spacing.md,
+    borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: 10, ...Shadow.card,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: Fonts.sizes.md,
-    color: Colors.primary,
-  },
-
-  categoriasScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-  },
+  searchInput: { flex: 1, fontSize: Fonts.sizes.md, color: Colors.primary },
+  categoriasScroll: { flexGrow: 0, flexShrink: 0 },
   categoriasContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
-    flexDirection: 'row',
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
+    gap: Spacing.sm, flexDirection: 'row',
   },
   categoriaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.white,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: Radius.full,
+    backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border,
   },
-  categoriaChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  categoriaText: {
-    fontSize: Fonts.sizes.sm,
-    fontWeight: '600',
-    color: Colors.muted,
-  },
-  categoriaTextActive: {
-    color: Colors.background,
-  },
-
-  listContent: {
-    padding: Spacing.lg,
-    paddingBottom: 100,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-
+  categoriaText: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.muted },
+  categoriaTextActive: { color: Colors.background },
+  loadingBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  listContent: { padding: Spacing.lg, paddingBottom: 100 },
+  row: { justifyContent: 'space-between', marginBottom: Spacing.md },
   produtoCard: {
-    width: '48%',
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    ...Shadow.card,
+    width: '48%', backgroundColor: Colors.white,
+    borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
   },
-  produtoImg: {
-    height: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  produtoImg: { height: 110, alignItems: 'center', justifyContent: 'center' },
   produtoNome: {
-    fontSize: Fonts.sizes.md,
-    fontWeight: '700',
-    color: Colors.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingTop: Spacing.sm,
+    fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.primary,
+    paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm,
   },
-  produtoDesc: {
-    fontSize: Fonts.sizes.xs,
-    color: Colors.accent,
-    paddingHorizontal: Spacing.sm,
-    paddingTop: 2,
-  },
-  produtoPreco: {
-    fontSize: Fonts.sizes.md,
-    fontWeight: '700',
-    color: Colors.accent,
-    paddingHorizontal: Spacing.sm,
-    paddingTop: 4,
-  },
+  produtoDesc: { fontSize: Fonts.sizes.xs, color: Colors.accent, paddingHorizontal: Spacing.sm, paddingTop: 2 },
+  produtoPreco: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.accent, paddingHorizontal: Spacing.sm, paddingTop: 4 },
   addBtn: {
-    backgroundColor: Colors.primary,
-    margin: Spacing.sm,
-    borderRadius: Radius.md,
-    paddingVertical: 8,
-    alignItems: 'center',
+    backgroundColor: Colors.primary, margin: Spacing.sm,
+    borderRadius: Radius.md, paddingVertical: 8, alignItems: 'center',
   },
-  addBtnText: {
-    fontSize: Fonts.sizes.sm,
-    fontWeight: '700',
-    color: Colors.background,
-  },
-
+  addBtnText: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.background },
   carrinhoBadge: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.card,
-    shadowOpacity: 0.3,
+    position: 'absolute', bottom: 24, right: 24, width: 56, height: 56,
+    borderRadius: 28, backgroundColor: Colors.primary, alignItems: 'center',
+    justifyContent: 'center', ...Shadow.card, shadowOpacity: 0.3,
   },
   badgeCount: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: Colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', top: -4, right: -4, width: 20, height: 20,
+    borderRadius: 10, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center',
   },
-  badgeCountText: {
-    fontSize: Fonts.sizes.xs,
-    fontWeight: '800',
-    color: Colors.background,
-  },
+  badgeCountText: { fontSize: Fonts.sizes.xs, fontWeight: '800', color: Colors.background },
 });
