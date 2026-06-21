@@ -1,7 +1,12 @@
 {
   "expo": {
-    "name": "URICafe",
-    "slug": "uricafe",
-    "version": "1.0.0"
+    "name": "URI Café",
+    "slug": "uri-cafe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      ["expo-sqlite"]
+    ]
   }
 }

@@ -1,56 +1,48 @@
-import db from './database';
+import { getDatabase } from './database';
 import { Categoria } from '../models';
 
-export default {
-  listar: (callback: (rows: Categoria[]) => void) => {
-    db.transaction(tx => {
-      tx.executeSql('SELECT * FROM categorias', [], (_, { rows }) => {
-        // @ts-ignore
-        callback(rows._array);
-      });
-    });
+export const CategoriaDAO = {
+  async listar(): Promise<Categoria[]> {
+    const db = getDatabase();
+    return await db.getAllAsync<Categoria>(
+      'SELECT * FROM categorias ORDER BY nome'
+    );
   },
 
-  buscarPorId: (id: number, callback: (cat?: Categoria) => void) => {
-    db.transaction(tx => {
-      tx.executeSql('SELECT * FROM categorias WHERE id = ?', [id], (_, { rows }) => {
-        // @ts-ignore
-        callback(rows._array[0]);
-      });
-    });
+  async buscarPorId(id: number): Promise<Categoria | null> {
+    const db = getDatabase();
+    return await db.getFirstAsync<Categoria>(
+      'SELECT * FROM categorias WHERE id = ?', [id]
+    );
   },
 
-  inserir: (categoria: Categoria, callback?: () => void) => {
-    db.transaction(tx => {
-      tx.executeSql('INSERT INTO categorias (nome) VALUES (?)', [categoria.nome], () => {
-        callback?.();
-      });
-    });
+  async inserir(categoria: Omit<Categoria, 'id'>): Promise<number> {
+    const db = getDatabase();
+    const result = await db.runAsync(
+      'INSERT INTO categorias (nome, icone, cor) VALUES (?, ?, ?)',
+      [categoria.nome, categoria.icone, categoria.cor]
+    );
+    return result.lastInsertRowId;
   },
 
-  atualizar: (categoria: Categoria, callback?: () => void) => {
-    if (!categoria.id) return;
-    db.transaction(tx => {
-      tx.executeSql('UPDATE categorias SET nome = ? WHERE id = ?', [categoria.nome, categoria.id], () => {
-        callback?.();
-      });
-    });
+  async atualizar(categoria: Categoria): Promise<void> {
+    const db = getDatabase();
+    await db.runAsync(
+      'UPDATE categorias SET nome = ?, icone = ?, cor = ? WHERE id = ?',
+      [categoria.nome, categoria.icone, categoria.cor, categoria.id!]
+    );
   },
 
-  excluir: (id: number, callback?: () => void) => {
-    db.transaction(tx => {
-      tx.executeSql('DELETE FROM categorias WHERE id = ?', [id], () => {
-        callback?.();
-      });
-    });
+  async excluir(id: number): Promise<void> {
+    const db = getDatabase();
+    await db.runAsync('DELETE FROM categorias WHERE id = ?', [id]);
   },
 
-  temProdutos: (categoriaId: number, callback: (tem: boolean) => void) => {
-    db.transaction(tx => {
-      tx.executeSql('SELECT COUNT(*) as c FROM produtos WHERE categoriaId = ?', [categoriaId], (_, { rows }) => {
-        // @ts-ignore
-        callback(rows._array[0].c > 0);
-      });
-    });
-  }
+  async temProdutos(id: number): Promise<boolean> {
+    const db = getDatabase();
+    const result = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM produtos WHERE categoria_id = ?', [id]
+    );
+    return (result?.count ?? 0) > 0;
+  },
 };

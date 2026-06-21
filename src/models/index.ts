@@ -1,29 +1,41 @@
 export interface Categoria {
   id?: number;
   nome: string;
+  icone: string;
+  cor: string;
 }
 
 export interface Produto {
   id?: number;
   nome: string;
-  descricao?: string;
+  descricao: string;
   preco: number;
-  categoriaId?: number | null;
-  disponivel?: boolean;
+  categoria_id: number;
+  categoria_nome?: string;
+  categoria_cor?: string;
+  disponivel: boolean;
+  destaque: boolean;
 }
+
+export type StatusPedido = 'em_preparo' | 'pronto' | 'entregue';
 
 export interface ItemPedido {
   id?: number;
-  produtoId: number;
+  pedido_id?: number;
+  produto_id: number;
+  produto_nome?: string;
+  produto_preco?: number;
   quantidade: number;
-  precoUnitario: number;
+  subtotal: number;
 }
 
 export interface Pedido {
   id?: number;
-  clienteNome: string;
-  status: 'PENDENTE' | 'EM_PREPARO' | 'ENTREGUE' | 'CANCELADO';
+  numero: number;
+  cliente_nome: string;
+  status: StatusPedido;
+  observacao?: string;
   total: number;
+  data_criacao: string;
   itens?: ItemPedido[];
-  criadoEm?: string;
 }
