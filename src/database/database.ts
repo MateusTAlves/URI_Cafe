@@ -33,6 +33,14 @@ export async function initDatabase(): Promise<void> {
       FOREIGN KEY (categoria_id) REFERENCES categorias(id)
     );
 
+    CREATE TABLE IF NOT EXISTS produto_imagens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      produto_id INTEGER NOT NULL,
+      uri TEXT NOT NULL,
+      ordem INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (produto_id) REFERENCES produtos(id)
+    );
+
     CREATE TABLE IF NOT EXISTS pedidos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       numero INTEGER NOT NULL,

@@ -16,6 +16,7 @@ export interface Produto {
   categoria_icone?: string;
   disponivel: boolean;
   destaque: boolean;
+  imagens?: string[];
 }
 
 export type StatusPedido = 'em_preparo' | 'pronto' | 'entregue';

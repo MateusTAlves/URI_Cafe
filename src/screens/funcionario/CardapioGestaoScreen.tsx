@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View, Text, StyleSheet, FlatList, TouchableOpacity, Switch,
+  ScrollView, ActivityIndicator, Platform, ToastAndroid, Alert,
+} from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
@@ -7,6 +10,12 @@ import { useProdutos } from '../../viewmodels/useProdutos';
 import { useCategorias } from '../../viewmodels/useCategorias';
 import { Produto } from '../../models';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { ProdutoCardImagem } from '../../components/ProdutoCardImagem';
+
+function showToast(msg: string) {
+  if (Platform.OS === 'android') ToastAndroid.show(msg, ToastAndroid.SHORT);
+  else Alert.alert('', msg);
+}
 
 export function CardapioGestaoScreen() {
   const navigation = useNavigation<any>();
@@ -22,10 +31,28 @@ export function CardapioGestaoScreen() {
     }, [catSelecionada])
   );
 
+  const handleToggleDisponivel = async (id: number, nomeAtual: string) => {
+    await toggleDisponivel(id);
+    showToast(`Disponibilidade de "${nomeAtual}" atualizada!`);
+  };
+
+  const handleToggleDestaque = async (id: number, nomeAtual: string) => {
+    await toggleDestaque(id);
+    showToast(`Destaque de "${nomeAtual}" atualizado!`);
+  };
+
+  const handleExcluir = async () => {
+    if (modalExcluir !== null) {
+      await excluir(modalExcluir);
+      showToast('Produto excluído!');
+      setModalExcluir(null);
+    }
+  };
+
   const renderProduto = ({ item }: { item: Produto }) => (
     <View style={styles.card}>
-      <View style={[styles.cardImg, { backgroundColor: item.categoria_cor ?? Colors.accent }]}>
-        <Ionicons name={(item.categoria_icone as any) ?? 'fast-food'} size={36} color="#fff" />
+      <View style={styles.cardImgWrap}>
+        <ProdutoCardImagem item={item} height={100} corPadrao={Colors.accent} iconePadrao="fast-food" />
         <View style={styles.cardActions}>
           <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ProdutoForm', { produto: item })}>
             <Ionicons name="pencil" size={14} color={Colors.primary} />
@@ -42,7 +69,7 @@ export function CardapioGestaoScreen() {
         <Text style={styles.switchLabel}>Disponível</Text>
         <Switch
           value={item.disponivel}
-          onValueChange={() => toggleDisponivel(item.id!)}
+          onValueChange={() => handleToggleDisponivel(item.id!, item.nome)}
           trackColor={{ false: Colors.border, true: Colors.ready }}
           thumbColor={Colors.white}
           style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
@@ -52,7 +79,7 @@ export function CardapioGestaoScreen() {
         <Text style={styles.switchLabel}>Destaque</Text>
         <Switch
           value={item.destaque}
-          onValueChange={() => toggleDestaque(item.id!)}
+          onValueChange={() => handleToggleDestaque(item.id!, item.nome)}
           trackColor={{ false: Colors.border, true: Colors.accent }}
           thumbColor={Colors.white}
           style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
@@ -118,10 +145,7 @@ export function CardapioGestaoScreen() {
         icone="trash-outline"
         destrutivo
         onCancelar={() => setModalExcluir(null)}
-        onConfirmar={() => {
-          if (modalExcluir !== null) excluir(modalExcluir);
-          setModalExcluir(null);
-        }}
+        onConfirmar={handleExcluir}
       />
     </View>
   );
@@ -141,7 +165,7 @@ const styles = StyleSheet.create({
   row: { justifyContent: 'space-between', marginBottom: Spacing.md },
   vazio: { fontSize: Fonts.sizes.md, color: Colors.muted, textAlign: 'center', paddingVertical: Spacing.xl },
   card: { width: '48%', backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
-  cardImg: { height: 100, alignItems: 'center', justifyContent: 'center' },
+  cardImgWrap: { height: 100, position: 'relative' },
   cardActions: { position: 'absolute', top: 6, right: 6, flexDirection: 'row', gap: 4 },
   actionBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   cardNome: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.primary, padding: Spacing.sm, paddingBottom: 0 },

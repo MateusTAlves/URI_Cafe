@@ -6,6 +6,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
+import { ProdutoCardImagem } from '../../components/ProdutoCardImagem';
 import { useProdutos } from '../../viewmodels/useProdutos';
 
 export function HomeClienteScreen() {
@@ -55,9 +56,7 @@ export function HomeClienteScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.destaquesScroll}>
               {destaques.map((item) => (
                 <View key={item.id} style={styles.destaqueCard}>
-                  <View style={[styles.destaqueImg, { backgroundColor: item.categoria_cor ?? Colors.primary }]}>
-                    <Ionicons name={(item.categoria_icone as any) ?? 'restaurant'} size={32} color="#fff" />
-                  </View>
+                  <ProdutoCardImagem item={item} height={100} />
                   <Text style={styles.destaqueNome}>{item.nome}</Text>
                   <View style={styles.destaqueFooter}>
                     <Text style={styles.destaquePreco}>{formatCurrency(item.preco)}</Text>

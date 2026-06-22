@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Fonts, Spacing, Radius } from '../../utils/theme';
 import { useProdutos } from '../../viewmodels/useProdutos';
 import { useCategorias } from '../../viewmodels/useCategorias';
@@ -21,10 +23,32 @@ export function ProdutoFormScreen() {
   const [categoriaId, setCategoriaId] = useState<number | null>(produtoEdicao?.categoria_id ?? null);
   const [disponivel, setDisponivel] = useState(produtoEdicao?.disponivel ?? true);
   const [destaque, setDestaque] = useState(produtoEdicao?.destaque ?? false);
+  const [imagens, setImagens] = useState<string[]>(produtoEdicao?.imagens ?? []);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
   useEffect(() => { carregarCats(); }, []);
+
+  const handleAdicionarImagem = async () => {
+    const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissao.granted) {
+      setErro('Permita o acesso às fotos para adicionar uma imagem.');
+      return;
+    }
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (!resultado.canceled && resultado.assets?.[0]?.uri) {
+      setImagens((prev) => [...prev, resultado.assets[0].uri]);
+    }
+  };
+
+  const handleRemoverImagem = (uri: string) => {
+    setImagens((prev) => prev.filter((i) => i !== uri));
+  };
 
   const handleSalvar = async () => {
     setErro('');
@@ -41,6 +65,7 @@ export function ProdutoFormScreen() {
       categoria_id: categoriaId,
       disponivel,
       destaque,
+      imagens,
     };
 
     const ok = await salvar(produto);
@@ -50,7 +75,8 @@ export function ProdutoFormScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <Ionicons name="chevron-back" size={22} color={Colors.primary} />
@@ -70,6 +96,23 @@ export function ProdutoFormScreen() {
       <View style={styles.field}>
         <Text style={styles.label}>Preço (R$)</Text>
         <TextInput style={styles.input} value={preco} onChangeText={setPreco} placeholder="14,90" placeholderTextColor={Colors.muted} keyboardType="decimal-pad" />
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>Fotos do Produto</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagensRow}>
+          {imagens.map((uri) => (
+            <View key={uri} style={styles.imagemThumbWrap}>
+              <Image source={{ uri }} style={styles.imagemThumb} />
+              <TouchableOpacity style={styles.imagemRemoveBtn} onPress={() => handleRemoverImagem(uri)}>
+                <Ionicons name="close" size={12} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          ))}
+          <TouchableOpacity style={styles.addImagemBtn} onPress={handleAdicionarImagem}>
+            <Ionicons name="camera-outline" size={22} color={Colors.muted} />
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       <View style={styles.field}>
@@ -118,19 +161,33 @@ export function ProdutoFormScreen() {
         {salvando ? <ActivityIndicator color={Colors.background} /> : <Text style={styles.btnSalvarText}>Salvar Produto</Text>}
       </TouchableOpacity>
 
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing.lg, paddingTop: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xxl },
+  scroll: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xxl },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: Spacing.sm },
   headerTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   field: { gap: Spacing.sm },
   label: { fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: { backgroundColor: Colors.white, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.border, paddingHorizontal: Spacing.md, paddingVertical: 12, fontSize: Fonts.sizes.md, color: Colors.primary },
   inputMulti: { height: 80, textAlignVertical: 'top' },
+  imagensRow: { flexDirection: 'row', gap: Spacing.sm },
+  imagemThumbWrap: { width: 70, height: 70, position: 'relative' },
+  imagemThumb: { width: 70, height: 70, borderRadius: Radius.md },
+  imagemRemoveBtn: {
+    position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 10,
+    backgroundColor: Colors.delete, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: Colors.background,
+  },
+  addImagemBtn: {
+    width: 70, height: 70, borderRadius: Radius.md, borderWidth: 1.5,
+    borderColor: Colors.border, borderStyle: 'dashed', alignItems: 'center',
+    justifyContent: 'center', backgroundColor: Colors.white,
+  },
   radioOption: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, backgroundColor: Colors.white, borderRadius: Radius.md, padding: Spacing.md, borderWidth: 1.5, borderColor: Colors.border },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center' },
   radioInner: { width: 10, height: 10, borderRadius: 5 },

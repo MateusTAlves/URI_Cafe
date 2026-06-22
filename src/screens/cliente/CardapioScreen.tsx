@@ -9,6 +9,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../ut
 import { useProdutos } from '../../viewmodels/useProdutos';
 import { useCategorias } from '../../viewmodels/useCategorias';
 import { Produto } from '../../models';
+import { ProdutoCardImagem } from '../../components/ProdutoCardImagem';
 
 export function CardapioScreen() {
   const navigation = useNavigation<any>();
@@ -47,9 +48,7 @@ export function CardapioScreen() {
     const qtdNoCarrinho = carrinho.find((i) => i.id === item.id)?.quantidade ?? 0;
     return (
       <View style={styles.produtoCard}>
-        <View style={[styles.produtoImg, { backgroundColor: item.categoria_cor ?? Colors.primary }]}>
-          <Ionicons name={(item.categoria_icone as any) ?? 'restaurant'} size={36} color="#fff" />
-        </View>
+        <ProdutoCardImagem item={item} height={110} />
         <Text style={styles.produtoNome}>{item.nome}</Text>
         <Text style={styles.produtoDesc} numberOfLines={1}>{item.descricao}</Text>
         <Text style={styles.produtoPreco}>{formatCurrency(item.preco)}</Text>
@@ -187,7 +186,6 @@ const styles = StyleSheet.create({
     width: '48%', backgroundColor: Colors.white,
     borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
   },
-  produtoImg: { height: 110, alignItems: 'center', justifyContent: 'center' },
   produtoNome: {
     fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.primary,
     paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm,

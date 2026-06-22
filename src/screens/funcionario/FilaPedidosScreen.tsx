@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import {
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  ScrollView, ActivityIndicator, Platform, ToastAndroid, Alert,
+} from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../utils/theme';
 import { usePedidos } from '../../viewmodels/usePedidos';
 import { StatusPedido } from '../../models';
 import { ConfirmModal } from '../../components/ConfirmModal';
+
+function showToast(msg: string) {
+  if (Platform.OS === 'android') ToastAndroid.show(msg, ToastAndroid.SHORT);
+  else Alert.alert('', msg);
+}
 
 const STATUS_FILTROS: { key: StatusPedido | undefined; label: string; icone: string }[] = [
   { key: undefined, label: 'Todos', icone: 'grid-outline' },
@@ -45,6 +53,19 @@ export function FilaPedidosScreen() {
     }, [])
   );
 
+  const handleAtualizarStatus = async (id: number, status: StatusPedido) => {
+    await atualizarStatus(id, status);
+    showToast(`Status atualizado para "${statusLabels[status]}"!`);
+  };
+
+  const handleExcluir = async () => {
+    if (modalExcluir !== null) {
+      await excluir(modalExcluir);
+      showToast('Pedido excluído!');
+      setModalExcluir(null);
+    }
+  };
+
   const renderPedido = ({ item }: { item: typeof pedidos[0] }) => {
     const cor = statusColors[item.status];
     return (
@@ -77,7 +98,7 @@ export function FilaPedidosScreen() {
               <TouchableOpacity
                 key={s}
                 style={[styles.radioBtn, ativo && { backgroundColor: c, borderColor: c }]}
-                onPress={() => atualizarStatus(item.id!, s)}
+                onPress={() => handleAtualizarStatus(item.id!, s)}
               >
                 <Ionicons name={statusIcones[s] as any} size={13} color={ativo ? Colors.white : Colors.muted} />
                 <Text style={[styles.radioBtnText, ativo && { color: Colors.white }]}>
@@ -132,10 +153,7 @@ export function FilaPedidosScreen() {
         icone="trash-outline"
         destrutivo
         onCancelar={() => setModalExcluir(null)}
-        onConfirmar={() => {
-          if (modalExcluir !== null) excluir(modalExcluir);
-          setModalExcluir(null);
-        }}
+        onConfirmar={handleExcluir}
       />
     </View>
   );

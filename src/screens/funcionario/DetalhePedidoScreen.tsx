@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  ActivityIndicator, Platform, ToastAndroid, Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow, formatCurrency } from '../../utils/theme';
 import { PedidoDAO } from '../../database/PedidoDAO';
 import { Pedido, StatusPedido } from '../../models';
 import { ConfirmModal } from '../../components/ConfirmModal';
+
+function showToast(msg: string) {
+  if (Platform.OS === 'android') ToastAndroid.show(msg, ToastAndroid.SHORT);
+  else Alert.alert('', msg);
+}
 
 const STATUS_OPTIONS: { key: StatusPedido; label: string; icone: string }[] = [
   { key: 'em_preparo', label: 'Em preparo', icone: 'flame-outline' },
@@ -41,20 +50,38 @@ export function DetalhePedidoScreen() {
     if (!pedido) return;
     await PedidoDAO.atualizarStatus(pedido.id!, status);
     setPedido((prev) => prev ? { ...prev, status } : prev);
+    showToast(`Status atualizado para "${STATUS_OPTIONS.find(s => s.key === status)?.label}"!`);
   };
 
-  if (loading) return <ActivityIndicator color={Colors.primary} style={{ flex: 1 }} />;
+  const handleExcluir = async () => {
+    await PedidoDAO.excluir(pedidoId);
+    setModalExcluir(false);
+    showToast('Pedido excluído!');
+    navigation.goBack();
+  };
+
+  if (loading) return (
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={Colors.primary} />
+      </View>
+    </SafeAreaView>
+  );
+
   if (!pedido) return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: Colors.muted }}>Pedido não encontrado.</Text>
-    </View>
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: Colors.muted }}>Pedido não encontrado.</Text>
+      </View>
+    </SafeAreaView>
   );
 
   const cor = statusColors[pedido.status];
   const statusAtual = STATUS_OPTIONS.find((s) => s.key === pedido.status);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll}>
 
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
         <Ionicons name="chevron-back" size={22} color={Colors.primary} />
@@ -137,20 +164,17 @@ export function DetalhePedidoScreen() {
         icone="trash-outline"
         destrutivo
         onCancelar={() => setModalExcluir(false)}
-        onConfirmar={async () => {
-          await PedidoDAO.excluir(pedidoId);
-          setModalExcluir(false);
-          navigation.goBack();
-        }}
+        onConfirmar={handleExcluir}
       />
 
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing.lg, paddingTop: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxl },
+  scroll: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xxl },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backText: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.primary },
   pedidoCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, borderLeftWidth: 5, ...Shadow.card },

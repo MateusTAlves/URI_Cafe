@@ -6,7 +6,13 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "plugins": [
-      ["expo-sqlite"]
+      ["expo-sqlite"],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O URI Café precisa acessar suas fotos para adicionar imagens dos produtos."
+        }
+      ]
     ]
   }
 }
